@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# Cache
+*.cache
+cache/
