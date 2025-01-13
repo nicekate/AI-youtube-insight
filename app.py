@@ -86,6 +86,14 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                         value=saved_keys["deepseek"]
                     )
 
+            # 评论获取方式
+            comments_option_single = gr.Dropdown(
+                label="评论获取方式",
+                choices=["不获取评论", "只获取前100条", "获取全部评论"],
+                value="不获取评论",
+                interactive=True
+            )
+
             single_progress = gr.Markdown(label="进度提醒")
             single_video_info = gr.Markdown(label="视频信息")
             
@@ -110,7 +118,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                     video_url, 
                     deepseek_api,
                     stored_subtitle_prompt,
-                    stored_comments_prompt
+                    stored_comments_prompt,
+                    comments_option_single
                 ],
                 outputs=[
                     single_progress,
@@ -205,6 +214,14 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                         value=saved_keys["deepseek"]
                     )
 
+            # 评论获取方式（批量）
+            comments_option_batch = gr.Dropdown(
+                label="评论获取方式（批量）",
+                choices=["不获取评论", "只获取前100条", "获取全部评论"],
+                value="不获取评论",
+                interactive=True
+            )
+
             batch_progress = gr.Markdown(label="批量进度提醒")
             batch_md = gr.Markdown()
             batch_result = gr.Markdown()
@@ -219,7 +236,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                     max_videos, 
                     deepseek_api_batch,
                     stored_subtitle_prompt,
-                    stored_comments_prompt
+                    stored_comments_prompt,
+                    comments_option_batch
                 ],
                 outputs=[batch_progress, batch_md, batch_result]
             ).then(
@@ -288,39 +306,28 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                 else:
                     return gr.update(value=f"当前对话提示词：\n\n{new_prompt_str}"), new_prompt_str
 
-            # 修正点：在使用strip()前先判断None，或将其转换为""。
             def handle_save_prompts(subtitle_p, comments_p, system_p):
-                # 将 None 转成空字符串
                 subtitle_p = subtitle_p or ""
                 comments_p = comments_p or ""
                 system_p = system_p or ""
-
-                # 保存提示词到本地
                 save_prompts(subtitle_p, comments_p, system_p)
-
-                # 再次读取
                 new_subtitle, new_comments, new_system = load_prompts()
-                # 同样先避免 None
                 new_subtitle = new_subtitle or ""
                 new_comments = new_comments or ""
                 new_system = new_system or ""
-
                 updates = []
                 if not new_subtitle.strip():
                     updates.append(gr.update(value=""))
                 else:
                     updates.append(gr.update(value=new_subtitle))
-
                 if not new_comments.strip():
                     updates.append(gr.update(value=""))
                 else:
                     updates.append(gr.update(value=new_comments))
-
                 if not new_system.strip():
                     updates.append(gr.update(value=""))
                 else:
                     updates.append(gr.update(value=new_system))
-
                 return tuple(updates)
 
             subtitle_prompt_save_btn.click(
