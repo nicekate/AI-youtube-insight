@@ -1,4 +1,6 @@
 import gradio as gr
+import json
+import os
 
 # 导入拆分出去的模块
 from prompts import (
@@ -10,21 +12,39 @@ from analysis import process_youtube_content, batch_process_callback
 from chat import user_input
 from store import save_prompts, load_prompts
 
-def store_apis_from_single(y_api, ds_api):
+# 使用文件系统来存储 API keys
+KEYS_FILE = "api_keys.json"
+
+def load_api_keys():
+    """从本地文件加载 API keys"""
+    if os.path.exists(KEYS_FILE):
+        try:
+            with open(KEYS_FILE, "r") as f:
+                return json.load(f)
+        except:
+            pass
+    return {"youtube": "", "deepseek": ""}
+
+def save_api_keys(youtube_key, deepseek_key):
+    """保存 API keys 到本地文件"""
+    keys = {"youtube": youtube_key, "deepseek": deepseek_key}
+    try:
+        with open(KEYS_FILE, "w") as f:
+            json.dump(keys, f)
+    except:
+        pass
     return (
-        y_api,
-        ds_api,
-        gr.update(value=y_api),
-        gr.update(value=ds_api)
+        youtube_key,
+        deepseek_key,
+        gr.update(value=youtube_key),
+        gr.update(value=deepseek_key)
     )
 
+def store_apis_from_single(y_api, ds_api):
+    return save_api_keys(y_api, ds_api)
+
 def store_apis_from_batch(y_api_batch, ds_api_batch):
-    return (
-        y_api_batch,
-        ds_api_batch,
-        gr.update(value=y_api_batch),
-        gr.update(value=ds_api_batch)
-    )
+    return save_api_keys(y_api_batch, ds_api_batch)
 
 with gr.Blocks(theme=gr.themes.Soft()) as iface:
     gr.Markdown("## YouTube 内容分析器（含进度提醒 + 自定义字幕/评论总结提示词 + 批量生成）")
@@ -37,6 +57,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
     stored_subtitle_prompt = gr.State()
     stored_comments_prompt = gr.State()
     stored_system_prompt = gr.State()
+
+    saved_keys = load_api_keys()
 
     with gr.Tabs():
         with gr.TabItem("视频分析"):
@@ -52,14 +74,16 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                         label="YouTube API Key",
                         placeholder="请输入 YouTube API Key",
                         type="password",
-                        scale=1
+                        scale=1,
+                        value=saved_keys["youtube"]
                     )
                 with gr.Column(scale=1):
                     deepseek_api = gr.Textbox(
                         label="DeepSeek API Key",
                         placeholder="用于调用DeepSeek生成摘要",
                         type="password",
-                        scale=1
+                        scale=1,
+                        value=saved_keys["deepseek"]
                     )
 
             single_progress = gr.Markdown(label="进度提醒")
@@ -112,7 +136,9 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                 inputs=[youtube_api, deepseek_api],
                 outputs=[
                     stored_youtube_api_key,
-                    stored_deepseek_api_key
+                    stored_deepseek_api_key,
+                    youtube_api,
+                    deepseek_api
                 ]
             )
 
@@ -168,13 +194,15 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                     youtube_api_batch = gr.Textbox(
                         label="YouTube API Key（批量）",
                         placeholder="请输入 YouTube API Key 用于批量生成",
-                        type="password"
+                        type="password",
+                        value=saved_keys["youtube"]
                     )
                 with gr.Column(scale=1):
                     deepseek_api_batch = gr.Textbox(
                         label="DeepSeek API Key（批量）",
                         placeholder="用于调用DeepSeek批量生成摘要",
-                        type="password"
+                        type="password",
+                        value=saved_keys["deepseek"]
                     )
 
             batch_progress = gr.Markdown(label="批量进度提醒")
@@ -199,7 +227,9 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
                 inputs=[youtube_api_batch, deepseek_api_batch],
                 outputs=[
                     stored_youtube_api_key,
-                    stored_deepseek_api_key
+                    stored_deepseek_api_key,
+                    youtube_api_batch,
+                    deepseek_api_batch
                 ]
             )
 

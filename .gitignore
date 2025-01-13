@@ -21,3 +21,11 @@ venv/
 # Cache
 *.cache
 cache/
+
+# API keys
+api_keys.json
+prompts_storage.json
+
+# Generated files
+*.md
+!README.md

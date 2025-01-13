@@ -65,16 +65,12 @@ def analyze_single_video_with_progress(
     # 3) 正在获取评论
     yield ("正在获取评论...", "", "", "", "", "")
     try:
-        comments_data = cached_get_comment_threads(youtube_api_key, video_id, max_results=100)
-        comments = []
-        for idx, item in enumerate(comments_data.get("items", []), 1):
-            comment_snippet = item["snippet"]["topLevelComment"]["snippet"]
-            comments.append({
-                "text": comment_snippet["textDisplay"],
-                "publishedAt": comment_snippet["publishedAt"],
-                "likes": comment_snippet["likeCount"]
-            })
-    except:
+        comments = cached_get_comment_threads(youtube_api_key, video_id)
+        if not comments:
+            comments = ["无法获取评论"]
+        yield (f"已获取 {len(comments)} 条评论...", "", "", "", "", "")
+    except Exception as e:
+        print(f"获取评论失败: {e}")
         comments = ["无法获取评论"]
     comments_text = format_comments(comments)
 
@@ -108,7 +104,7 @@ def analyze_single_video_with_progress(
             },
             {
                 "role": "user",
-                "content": f"请总结以下评论内容：\n\n{comments_text}"
+                "content": f"请总结以下全部 {len(comments)} 条评论内容：\n\n{comments_text}"
             }
         ]
     )
